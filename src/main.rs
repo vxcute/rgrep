@@ -11,9 +11,11 @@ struct Args {
     filename: String,
 
     #[arg(short,long)]
-    pattern: String
-}
+    pattern: String,
 
+    #[arg(short, long, default_value_t=false)]
+    ignore_case: bool
+}
 
 fn main() -> std::io::Result<()>{
 
@@ -48,24 +50,46 @@ fn main() -> std::io::Result<()>{
     let mut found = false;
 
     filecontent.lines().for_each(|line|{
-        match line.find(&pattern) {
-            Some(_) => {
-             line.split_ascii_whitespace().for_each(|w|{
-                if w == pattern {
-                    print!("{} ", pattern.green());
-                    found = true;
-                } else {
-                    print!("{} ", w);
-                }
-                match std::io::stdout().flush() {
-                    Ok(()) => {}
-                    Err(_) => {}
-                }
-             });
+        if args.ignore_case {
+            match line.to_lowercase().as_str().find(&pattern) {
+                Some(_) => {
+                line.split_ascii_whitespace().for_each(|w|{
+                    if w.eq_ignore_ascii_case(pattern.as_str()) {
+                        print!("{} ", w.green());
+                        found = true;
+                    } else {
+                        print!("{} ", w);
+                    }
+                    match std::io::stdout().flush() {
+                        Ok(()) => {}
+                        Err(_) => {}
+                    }
+                });
 
-             println!();
-            } 
-            None => {}
+                println!();
+                } 
+                None => {}
+            }
+        } else {
+            match line.find(&pattern) {
+                Some(_) => {
+                line.split_ascii_whitespace().for_each(|w|{
+                    if w == pattern {
+                        print!("{} ", pattern.green());
+                        found = true;
+                    } else {
+                        print!("{} ", w);
+                    }
+                    match std::io::stdout().flush() {
+                        Ok(()) => {}
+                        Err(_) => {}
+                    }
+                });
+
+                println!();
+                } 
+                None => {}
+            }
         }
     });
 
