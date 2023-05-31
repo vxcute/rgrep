@@ -2,18 +2,24 @@ use std::io::Read;
 use std::path::Path;
 use std::fs::File;
 use colored::*;
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(author,version,about, long_about = None)]
+struct Args {
+    #[arg(short,long)]
+    filename: String,
+
+    #[arg(short,long)]
+    pattern: String
+}
 
 fn main() -> std::io::Result<()>{
 
-    let args: Vec<String> = std::env::args().collect();
+    let args = Args::parse();
 
-    if args.len() < 3 { 
-        println!("Usage {} filename pattern", args[0]);
-        return Ok(());
-    }    
-
-    let filepath = Path::new(&args[1]);
-    let pattern = &args[2];
+    let filepath = Path::new(&args.filename);
+    let pattern = args.pattern;
 
     if !filepath.exists() {
         println!("[!] File does not exist");
@@ -39,7 +45,7 @@ fn main() -> std::io::Result<()>{
     let mut found = false;
 
     filecontent.lines().for_each(|line|{
-        match line.find(pattern) {
+        match line.find(&pattern) {
             Some(n) => {
               println!("{}{}{}", &line[..n], pattern.green(), &line[n+pattern.len()..]);
               found = true;
