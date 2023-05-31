@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::fs::File;
 use colored::*;
@@ -14,16 +14,19 @@ struct Args {
     pattern: String
 }
 
+
 fn main() -> std::io::Result<()>{
 
     let args = Args::parse();
-
     let filepath = Path::new(&args.filename);
     let pattern = args.pattern;
 
     if !filepath.exists() {
-        println!("[!] File does not exist");
+        println!("{}", "[!] File does not exist".red());
         return Ok(());
+    } else if !filepath.is_file() {
+        println!("{}", "[!] Not a regular file".red());
+        return Ok(())
     }
 
     let mut file = File::open(filepath)?;
@@ -46,9 +49,21 @@ fn main() -> std::io::Result<()>{
 
     filecontent.lines().for_each(|line|{
         match line.find(&pattern) {
-            Some(n) => {
-              println!("{}{}{}", &line[..n], pattern.green(), &line[n+pattern.len()..]);
-              found = true;
+            Some(_) => {
+             line.split_ascii_whitespace().for_each(|w|{
+                if w == pattern {
+                    print!("{} ", pattern.green());
+                    found = true;
+                } else {
+                    print!("{} ", w);
+                }
+                match std::io::stdout().flush() {
+                    Ok(()) => {}
+                    Err(_) => {}
+                }
+             });
+
+             println!();
             } 
             None => {}
         }
@@ -57,6 +72,5 @@ fn main() -> std::io::Result<()>{
     if !found {
         println!("[!] '{}' is not found in {:?}", pattern.red(), filepath);
     }
-
     Ok(())
 }
